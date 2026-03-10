@@ -57,7 +57,7 @@ export async function install(
   let downloadPath: string;
 
   if (isGoreleaserx(distribution)) {
-    const repo = goreleaserxRepo || 'codefuturist/goreleaser-pro-internal';
+    const repo = goreleaserxRepo || 'codefuturist/goreleaserx';
     if (!goreleaserxToken) {
       throw new Error('goreleaserx-token is required to download from the private repo');
     }

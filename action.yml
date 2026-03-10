@@ -12,12 +12,12 @@ inputs:
     default: 'goreleaserx'
     required: false
   version:
-    description: 'GoReleaser version (e.g. ~> v2, v2.14.0-pro.1 for goreleaserx)'
-    default: '~> v2'
+    description: 'GoReleaser version (e.g. v2.14.0-pro.2, or "latest" for goreleaserx)'
+    default: 'latest'
     required: false
   goreleaserx-repo:
     description: 'GitHub repo for goreleaserx binaries (owner/repo)'
-    default: 'codefuturist/goreleaser-pro-internal'
+    default: 'codefuturist/goreleaserx'
     required: false
   goreleaserx-token:
     description: 'GitHub token with read access to goreleaserx private repo'

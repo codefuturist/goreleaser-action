@@ -31,10 +31,9 @@ export interface GitHubRelease {
 }
 
 export const getRelease = async (distribution: string, version: string): Promise<GitHubRelease> => {
-  // goreleaserx uses exact tags only — no goreleaser.com JSON, no semver ranges
+  // goreleaserx resolves via GitHub API — no goreleaser.com JSON
   if (goreleaser.isGoreleaserx(distribution)) {
-    const tag = version.startsWith('v') ? version : `v${version}`;
-    return {tag_name: tag};
+    return getGoreleaserxRelease(version);
   }
 
   if (version === 'latest') {
@@ -42,6 +41,31 @@ export const getRelease = async (distribution: string, version: string): Promise
     return getReleaseTag(distribution, '~> v2');
   }
   return getReleaseTag(distribution, version);
+};
+
+// Resolve goreleaserx version: 'latest' / '~> v2' → latest GitHub release,
+// exact version → use as-is.
+const getGoreleaserxRelease = async (version: string): Promise<GitHubRelease> => {
+  if (version === 'latest' || version === '~> v2') {
+    const tag = await getGoreleaserxLatestTag();
+    core.info(`Resolved goreleaserx latest → ${tag}`);
+    return {tag_name: tag};
+  }
+  const tag = version.startsWith('v') ? version : `v${version}`;
+  return {tag_name: tag};
+};
+
+const getGoreleaserxLatestTag = async (): Promise<string> => {
+  return withRetry(async () => {
+    const http: httpm.HttpClient = new httpm.HttpClient('goreleaser-action');
+    const resp = await http.getJson<GitHubRelease>(
+      'https://api.github.com/repos/codefuturist/goreleaserx/releases/latest'
+    );
+    if (!resp.result || !resp.result.tag_name) {
+      throw new Error('Failed to fetch latest goreleaserx release');
+    }
+    return resp.result.tag_name;
+  });
 };
 
 export const getReleaseTag = async (distribution: string, version: string): Promise<GitHubRelease> => {

@@ -17,11 +17,11 @@ export interface Inputs {
 export async function getInputs(): Promise<Inputs> {
   return {
     distribution: core.getInput('distribution') || 'goreleaserx',
-    version: core.getInput('version') || '~> v2',
+    version: core.getInput('version') || 'latest',
     args: core.getInput('args'),
     workdir: core.getInput('workdir') || '.',
     installOnly: core.getBooleanInput('install-only'),
-    goreleaserxRepo: core.getInput('goreleaserx-repo') || 'codefuturist/goreleaser-pro-internal',
+    goreleaserxRepo: core.getInput('goreleaserx-repo') || 'codefuturist/goreleaserx',
     goreleaserxToken: core.getInput('goreleaserx-token')
   };
 }
