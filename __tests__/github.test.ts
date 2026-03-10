@@ -98,6 +98,18 @@ describe('getRelease', () => {
     expect(release?.tag_name).toEqual('v2.8.1');
   });
 
+  it('returns exact tag for goreleaserx', async () => {
+    const release = await github.getRelease('goreleaserx', 'v2.14.0-pro.1');
+    expect(release).not.toBeNull();
+    expect(release?.tag_name).toEqual('v2.14.0-pro.1');
+  });
+
+  it('prepends v prefix for goreleaserx version without it', async () => {
+    const release = await github.getRelease('goreleaserx', '2.14.0-pro.1');
+    expect(release).not.toBeNull();
+    expect(release?.tag_name).toEqual('v2.14.0-pro.1');
+  });
+
   it('unknown GoReleaser Pro release', async () => {
     await expect(github.getRelease('goreleaser-pro', 'foo')).rejects.toThrow(
       new Error('Cannot find GoReleaser release foo in https://goreleaser.com/static/releases-pro.json')

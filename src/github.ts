@@ -31,6 +31,12 @@ export interface GitHubRelease {
 }
 
 export const getRelease = async (distribution: string, version: string): Promise<GitHubRelease> => {
+  // goreleaserx uses exact tags only — no goreleaser.com JSON, no semver ranges
+  if (goreleaser.isGoreleaserx(distribution)) {
+    const tag = version.startsWith('v') ? version : `v${version}`;
+    return {tag_name: tag};
+  }
+
   if (version === 'latest') {
     core.warning("You are using 'latest' as default version. Will lock to '~> v2'.");
     return getReleaseTag(distribution, '~> v2');

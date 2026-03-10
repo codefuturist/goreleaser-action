@@ -10,7 +10,7 @@ import * as exec from '@actions/exec';
 async function run(): Promise<void> {
   try {
     const inputs: context.Inputs = await context.getInputs();
-    const bin = await goreleaser.install(inputs.distribution, inputs.version);
+    const bin = await goreleaser.install(inputs.distribution, inputs.version, inputs.goreleaserxRepo, inputs.goreleaserxToken);
     core.info(`GoReleaser ${inputs.version} installed successfully`);
 
     if (inputs.installOnly) {

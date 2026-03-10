@@ -8,12 +8,19 @@ branding:
 
 inputs:
   distribution:
-    description: 'GoReleaser Distribution (goreleaser or goreleaser-pro)'
+    description: 'GoReleaser distribution (goreleaser, goreleaser-pro, or goreleaserx)'
     default: 'goreleaser'
     required: false
   version:
-    description: 'GoReleaser version'
+    description: 'GoReleaser version (e.g. ~> v2, v2.14.0-pro.1 for goreleaserx)'
     default: '~> v2'
+    required: false
+  goreleaserx-repo:
+    description: 'GitHub repo for goreleaserx binaries (owner/repo)'
+    default: 'codefuturist/goreleaser-pro-internal'
+    required: false
+  goreleaserx-token:
+    description: 'GitHub token with read access to goreleaserx private repo'
     required: false
   args:
     description: 'Arguments to pass to GoReleaser'

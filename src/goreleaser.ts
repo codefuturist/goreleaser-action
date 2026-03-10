@@ -7,18 +7,30 @@ import * as github from './github';
 import * as core from '@actions/core';
 import * as tc from '@actions/tool-cache';
 
-export async function install(distribution: string, version: string): Promise<string> {
+export async function install(distribution: string, version: string, goreleaserxRepo?: string, goreleaserxToken?: string): Promise<string> {
   const release: github.GitHubRelease = await github.getRelease(distribution, version);
   const filename = getFilename(distribution);
-  const downloadUrl = util.format(
-    'https://github.com/goreleaser/%s/releases/download/%s/%s',
-    distribution,
-    release.tag_name,
-    filename
-  );
+
+  let downloadUrl: string;
+  let authHeader: string | undefined;
+
+  if (isGoreleaserx(distribution)) {
+    const repo = goreleaserxRepo || 'codefuturist/goreleaser-pro-internal';
+    downloadUrl = util.format('https://github.com/%s/releases/download/%s/%s', repo, release.tag_name, filename);
+    if (goreleaserxToken) {
+      authHeader = `token ${goreleaserxToken}`;
+    }
+  } else {
+    downloadUrl = util.format(
+      'https://github.com/goreleaser/%s/releases/download/%s/%s',
+      distribution,
+      release.tag_name,
+      filename
+    );
+  }
 
   core.info(`Downloading ${downloadUrl}`);
-  const downloadPath: string = await tc.downloadTool(downloadUrl);
+  const downloadPath: string = await tc.downloadTool(downloadUrl, undefined, authHeader);
   core.debug(`Downloaded to ${downloadPath}`);
 
   core.info('Extracting GoReleaser');
@@ -36,10 +48,12 @@ export async function install(distribution: string, version: string): Promise<st
   }
   core.debug(`Extracted to ${extPath}`);
 
-  const cachePath: string = await tc.cacheDir(extPath, 'goreleaser-action', release.tag_name.replace(/^v/, ''));
+  const toolName = isGoreleaserx(distribution) ? 'goreleaserx-action' : 'goreleaser-action';
+  const cachePath: string = await tc.cacheDir(extPath, toolName, release.tag_name.replace(/^v/, ''));
   core.debug(`Cached to ${cachePath}`);
 
-  const exePath: string = path.join(cachePath, context.osPlat == 'win32' ? 'goreleaser.exe' : 'goreleaser');
+  const binName = isGoreleaserx(distribution) ? 'goreleaserx' : 'goreleaser';
+  const exePath: string = path.join(cachePath, context.osPlat == 'win32' ? `${binName}.exe` : binName);
   core.debug(`Exe path is ${exePath}`);
 
   return exePath;
@@ -53,7 +67,39 @@ export const isPro = (distribution: string): boolean => {
   return distribution === 'goreleaser-pro';
 };
 
+export const isGoreleaserx = (distribution: string): boolean => {
+  return distribution === 'goreleaserx';
+};
+
 const getFilename = (distribution: string): string => {
+  if (isGoreleaserx(distribution)) {
+    return getGoreleaserxFilename();
+  }
+  return getStandardFilename(distribution);
+};
+
+const getGoreleaserxFilename = (): string => {
+  let arch: string;
+  switch (context.osArch) {
+    case 'x64': {
+      arch = 'amd64';
+      break;
+    }
+    case 'arm64': {
+      arch = 'arm64';
+      break;
+    }
+    default: {
+      arch = context.osArch;
+      break;
+    }
+  }
+  const platform: string = context.osPlat == 'win32' ? 'windows' : context.osPlat;
+  const ext: string = context.osPlat == 'win32' ? 'zip' : 'tar.gz';
+  return util.format('goreleaserx_%s_%s.%s', platform, arch, ext);
+};
+
+const getStandardFilename = (distribution: string): string => {
   let arch: string;
   switch (context.osArch) {
     case 'x64': {

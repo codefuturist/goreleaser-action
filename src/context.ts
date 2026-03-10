@@ -10,6 +10,8 @@ export interface Inputs {
   args: string;
   workdir: string;
   installOnly: boolean;
+  goreleaserxRepo: string;
+  goreleaserxToken: string;
 }
 
 export async function getInputs(): Promise<Inputs> {
@@ -18,6 +20,8 @@ export async function getInputs(): Promise<Inputs> {
     version: core.getInput('version') || '~> v2',
     args: core.getInput('args'),
     workdir: core.getInput('workdir') || '.',
-    installOnly: core.getBooleanInput('install-only')
+    installOnly: core.getBooleanInput('install-only'),
+    goreleaserxRepo: core.getInput('goreleaserx-repo') || 'codefuturist/goreleaser-pro-internal',
+    goreleaserxToken: core.getInput('goreleaserx-token')
   };
 }

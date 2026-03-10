@@ -52,4 +52,22 @@ describe('distribSuffix', () => {
   it('does not suffix oss distribution', async () => {
     expect(goreleaser.distribSuffix('goreleaser')).toEqual('');
   });
+
+  it('does not suffix goreleaserx distribution', async () => {
+    expect(goreleaser.distribSuffix('goreleaserx')).toEqual('');
+  });
+});
+
+describe('isGoreleaserx', () => {
+  it('returns true for goreleaserx', () => {
+    expect(goreleaser.isGoreleaserx('goreleaserx')).toBe(true);
+  });
+
+  it('returns false for goreleaser', () => {
+    expect(goreleaser.isGoreleaserx('goreleaser')).toBe(false);
+  });
+
+  it('returns false for goreleaser-pro', () => {
+    expect(goreleaser.isGoreleaserx('goreleaser-pro')).toBe(false);
+  });
 });
