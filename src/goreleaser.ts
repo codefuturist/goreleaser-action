@@ -5,7 +5,45 @@ import yaml from 'js-yaml';
 import * as context from './context';
 import * as github from './github';
 import * as core from '@actions/core';
+import * as httpm from '@actions/http-client';
 import * as tc from '@actions/tool-cache';
+
+interface GitHubAsset {
+  id: number;
+  name: string;
+  url: string;
+}
+
+interface GitHubReleaseWithAssets {
+  tag_name: string;
+  assets: GitHubAsset[];
+}
+
+// Download a release asset from a private GitHub repo via the API.
+// The browser URL (github.com/.../releases/download/...) redirects to S3,
+// which strips the auth header. The API endpoint streams directly.
+async function downloadGoreleaserxAsset(repo: string, tag: string, filename: string, token: string): Promise<string> {
+  const http = new httpm.HttpClient('goreleaser-action', [], {
+    headers: {Authorization: `token ${token}`, Accept: 'application/vnd.github+json'}
+  });
+
+  const releaseUrl = `https://api.github.com/repos/${repo}/releases/tags/${tag}`;
+  core.info(`Looking up release ${tag} from ${repo}`);
+  const releaseResp = await http.getJson<GitHubReleaseWithAssets>(releaseUrl);
+  if (!releaseResp.result || !releaseResp.result.assets) {
+    throw new Error(`Failed to find release ${tag} in ${repo}`);
+  }
+
+  const asset = releaseResp.result.assets.find((a: GitHubAsset) => a.name === filename);
+  if (!asset) {
+    const available = releaseResp.result.assets.map((a: GitHubAsset) => a.name).join(', ');
+    throw new Error(`Asset ${filename} not found in release ${tag}. Available: ${available}`);
+  }
+
+  const assetApiUrl = `https://api.github.com/repos/${repo}/releases/assets/${asset.id}`;
+  core.info(`Downloading ${filename} via API (asset ${asset.id})`);
+  return await tc.downloadTool(assetApiUrl, undefined, `token ${token}`, {Accept: 'application/octet-stream'});
+}
 
 export async function install(
   distribution: string,
@@ -16,26 +54,25 @@ export async function install(
   const release: github.GitHubRelease = await github.getRelease(distribution, version);
   const filename = getFilename(distribution);
 
-  let downloadUrl: string;
-  let authHeader: string | undefined;
+  let downloadPath: string;
 
   if (isGoreleaserx(distribution)) {
     const repo = goreleaserxRepo || 'codefuturist/goreleaser-pro-internal';
-    downloadUrl = util.format('https://github.com/%s/releases/download/%s/%s', repo, release.tag_name, filename);
-    if (goreleaserxToken) {
-      authHeader = `token ${goreleaserxToken}`;
+    if (!goreleaserxToken) {
+      throw new Error('goreleaserx-token is required to download from the private repo');
     }
+    downloadPath = await downloadGoreleaserxAsset(repo, release.tag_name, filename, goreleaserxToken);
   } else {
-    downloadUrl = util.format(
+    const downloadUrl = util.format(
       'https://github.com/goreleaser/%s/releases/download/%s/%s',
       distribution,
       release.tag_name,
       filename
     );
+    core.info(`Downloading ${downloadUrl}`);
+    downloadPath = await tc.downloadTool(downloadUrl);
   }
 
-  core.info(`Downloading ${downloadUrl}`);
-  const downloadPath: string = await tc.downloadTool(downloadUrl, undefined, authHeader);
   core.debug(`Downloaded to ${downloadPath}`);
 
   core.info('Extracting GoReleaser');
