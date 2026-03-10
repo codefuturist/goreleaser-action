@@ -16,7 +16,7 @@ export interface Inputs {
 
 export async function getInputs(): Promise<Inputs> {
   return {
-    distribution: core.getInput('distribution') || 'goreleaser',
+    distribution: core.getInput('distribution') || 'goreleaserx',
     version: core.getInput('version') || '~> v2',
     args: core.getInput('args'),
     workdir: core.getInput('workdir') || '.',

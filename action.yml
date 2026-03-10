@@ -9,7 +9,7 @@ branding:
 inputs:
   distribution:
     description: 'GoReleaser distribution (goreleaser, goreleaser-pro, or goreleaserx)'
-    default: 'goreleaser'
+    default: 'goreleaserx'
     required: false
   version:
     description: 'GoReleaser version (e.g. ~> v2, v2.14.0-pro.1 for goreleaserx)'
