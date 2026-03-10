@@ -7,7 +7,12 @@ import * as github from './github';
 import * as core from '@actions/core';
 import * as tc from '@actions/tool-cache';
 
-export async function install(distribution: string, version: string, goreleaserxRepo?: string, goreleaserxToken?: string): Promise<string> {
+export async function install(
+  distribution: string,
+  version: string,
+  goreleaserxRepo?: string,
+  goreleaserxToken?: string
+): Promise<string> {
   const release: github.GitHubRelease = await github.getRelease(distribution, version);
   const filename = getFilename(distribution);
 
